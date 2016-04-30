@@ -11,7 +11,7 @@ import psutil
 
 class RegistrationAgent(object):
 
-	GLOBAL_PORT = 1266
+	GLOBAL_PORT = 1274
 	NUM_ATTEMPTS = 3
 
 	def __init__(self, hostName, hostPort):
@@ -64,7 +64,7 @@ class RegistrationAgent(object):
 			print "Timed out waiting for reply to REGISTER message"
 			if attempt < self.NUM_ATTEMPTS - 1:
 				attempt += 1
-				return self.privateRegister(attempt, port, serviceData, attempt)	
+				return self.privateRegister(port, serviceData, name, attempt)	
 			else: 
 				print "Sent {} REGISTER messages but got no reply.".format(self.NUM_ATTEMPTS)	
 				return 0	
@@ -125,11 +125,11 @@ class RegistrationAgent(object):
 
 		except socket.timeout:
 			print "Timed out waiting for reply to PROBE message"
-			if attempt < NUM_ATTEMPTS - 1:
+			if attempt < self.NUM_ATTEMPTS - 1:
 				attempt += 1
-				return probe(attempt)	
+				return self.privateProbe(attempt)	
 			else: 
-				print "Sent {} PROBE messages but got no reply.".format(NUM_ATTEMPTS)
+				print "Sent {} PROBE messages but got no reply.".format(self.NUM_ATTEMPTS)
 				return False
 
 	def processAck(self, data):
@@ -140,9 +140,9 @@ class RegistrationAgent(object):
 		return False
 
 	def unregister(self, port):
-		return self.privateUnegister(port, 0)
+		return self.privateUnregister(port, 0)
 
-	def privateUnegister(self, port, attempt):	
+	def privateUnregister(self, port, attempt):	
 		if attempt == 0: 
 			# Only increment on first attempt
 			self.incrSeqNum()
