@@ -9,16 +9,9 @@ import threading
 from threading import Timer
 import psutil
 
-sock = None
-registeredPorts = None
-globSeqNum = 0
-seviceAddress = None
-
-agent = None
-
 class RegistrationAgent(object):
 
-	GLOBAL_PORT = 1264
+	GLOBAL_PORT = 1266
 	NUM_ATTEMPTS = 3
 
 	def __init__(self, hostName, hostPort):
@@ -214,6 +207,3 @@ def ip2int(addr):
 
 def int2ip(addr):                                                               
     return socket.inet_ntoa(struct.pack("!I", addr))	
-
-if __name__ == "__main__":
-	main()

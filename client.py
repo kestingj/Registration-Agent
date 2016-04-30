@@ -22,64 +22,69 @@ def readStdIn(data, agent):
 		params = data.split()
 		command = params[0]
 		if command == "r":
-			if len(params) != 4:
-				print "Incorrect number of arguments"
-			else:
-				port = int(params[1])
-				servData = int(params[2])
-				name = params[3]
-				if port >= 0 and port < 65535:
-					lifetime = agent.register(port, servData, name)
-					if lifetime > 0:
-						localAddr = socket.gethostbyname(socket.gethostname())
-						localAddr = "127.0.0.1" #DELETE	
-						print "Register {}:{} successful: lifetime = {}".format(localAddr, port, lifetime)
-					else:
-						print "Registration failed"	
-				else: 
-					print "Port must be 0-65534."	
+			register(params, agent)	
 		elif command == "u":
-			if len(params) != 2:
-				print "Incorrect number of arguments"
-			else:	
-				port = int(params[1])
-				agent.unregister(port)		
+			unregister(params, agent)		
 		elif command == "f":
-			responses = None
-			if len(params) > 2:
-				print "Incorrect number of arguments"
-			elif len(params) == 2:
-				responses = agent.fetch(params[1])
-			else:
-				responses = agent.fetch("")	
-			if responses is not None:
-				for i in range(len(responses)):
-					response = responses[i]
-					ip, port, serviceData = response
-					print "[{}] {} {} {}".format(i, ip, port, serviceData)
-			else: 
-				print "No entries were fetched"			
+			fetch(params, agent)		
 		elif command == "p":
-			if len(params) != 1:
-				print "Incorrect number of arguments"
-			else:	
-				success = agent.probe()
-				if success:
-					print "Success"
-				else:
-					print "Failure"	
+			probe(agent)	
 		elif command == "q":
-			if len(params) != 1:
-				print "Incorrect number of arguments"
-			else:
-				agent.close()
-				os._exit(1)
-
+			quit(agent)
 		else:
 			print "Unrecognized command"
 
+def register(params, agent):
+	if len(params) != 4:
+		print "Incorrect number of arguments"
+	else:
+		port = int(params[1])
+		servData = int(params[2])
+		name = params[3]
+		if port >= 0 and port < 65535:
+			lifetime = agent.register(port, servData, name)
+			if lifetime > 0:
+				localAddr = socket.gethostbyname(socket.gethostname())
+				localAddr = "127.0.0.1" #DELETE	
+				print "Register {}:{} successful: lifetime = {}".format(localAddr, port, lifetime)
+			else:
+				print "Registration failed"	
+		else: 
+			print "Port must be 0-65534."
 
+def fetch(params, agent):
+	responses = None
+	if len(params) > 2:
+		print "Incorrect number of arguments"
+	elif len(params) == 2:
+		responses = agent.fetch(params[1])
+	else:
+		responses = agent.fetch("")	
+	if responses is not None:
+		for i in range(len(responses)):
+			response = responses[i]
+			ip, port, serviceData = response
+			print "[{}] {} {} {}".format(i, ip, port, serviceData)
+	else: 
+		print "No entries were fetched"	
 
+def unregister(params, agent):
+	if len(params) != 2:
+		print "Incorrect number of arguments"
+	else:	
+		port = int(params[1])
+		agent.unregister(port)	
+
+def probe(agent):
+	success = agent.probe()
+	if success:
+		print "Success"
+	else:
+		print "Failure"
+
+def quit(agent):
+	agent.close()
+	os._exit(1)	
 
 if __name__ == "__main__":
 	main()
