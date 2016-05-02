@@ -2,12 +2,10 @@
 
 import struct
 import socket
-import pyuv
 import sys
 import os
 import threading
 from threading import Timer
-import psutil
 
 class RegistrationAgent(object):
 
