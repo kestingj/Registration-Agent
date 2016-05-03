@@ -11,7 +11,7 @@ lock = threading.RLock()
 
 class RegistrationAgent(object):
 
-	GLOBAL_PORT = 1274
+	GLOBAL_PORT = 1276
 	NUM_ATTEMPTS = 3
 
 	def __init__(self, hostName, hostPort):
@@ -45,7 +45,7 @@ class RegistrationAgent(object):
 		nameLength = len(name)
 	
 		
-		data = struct.pack(">HBBIHIB{}s".format(nameLength), 50273, self.seqNum, 1, ip2int(self.addr), port, serviceData, nameLength, name)
+		data = struct.pack(">HBBIHIB{}s".format(nameLength), 50273, self.readSeqNum(), 1, ip2int(self.addr), port, serviceData, nameLength, name)
 		
 		self.outSocket.sendto(data, self.serviceAddress)
 		try:
@@ -72,11 +72,10 @@ class RegistrationAgent(object):
 		return self.privateFetch(prefix, 0)			
 
 	def privateFetch(self, prefix, attempt):
-		print self.seqNum
 		if attempt == 0:
 			self.incrSeqNum()
 		prefixLength = len(prefix)
-		data = struct.pack(">HBBB{}s".format(prefixLength), 50273, self.seqNum, 3, prefixLength, prefix)
+		data = struct.pack(">HBBB{}s".format(prefixLength), 50273, self.readSeqNum(), 3, prefixLength, prefix)
 		self.outSocket.sendto(data, self.serviceAddress)
 		try:
 			receivedData, receivedAddr = self.outSocket.recvfrom(1024)
@@ -93,13 +92,12 @@ class RegistrationAgent(object):
 				return None	
 
 	def processFetchData(self, data):
-		print self.seqNum
 		size = len(data)
 		if size > 4:
 			# Fetch response
 			ver, packetSeqNum, typeNum, numResponses, stringOfResponses = struct.unpack(">HBBB{}s".format(size - 5), data)
-			print packetSeqNum
-			if ver == 50273 and packetSeqNum == self.seqNum and typeNum == 4:
+			
+			if ver == 50273 and packetSeqNum == self.readSeqNum() and typeNum == 4:
 				unpackString = ">"
 				for i in range(numResponses):
 					unpackString += "10s"
@@ -116,10 +114,9 @@ class RegistrationAgent(object):
 		return self.privateProbe(0)			
 
 	def privateProbe(self, attempt):
-		print self.seqNum
 		if attempt == 0:
 			self.incrSeqNum()
-		data = struct.pack(">HBB", 50273, self.seqNum, 6)
+		data = struct.pack(">HBB", 50273, self.readSeqNum(), 6)
 		self.outSocket.sendto(data, self.serviceAddress)
 		try:
 			receivedData, receivedAddr = self.outSocket.recvfrom(1024)
@@ -140,7 +137,7 @@ class RegistrationAgent(object):
 		if len(data) == 4:		
 			ver, packetSeqNum, typeNum = struct.unpack(">HBB", data)
 		
-			if ver == 50273 and packetSeqNum == self.seqNum and typeNum == 7:	
+			if ver == 50273 and packetSeqNum == self.readSeqNum() and typeNum == 7:	
 				return True
 		return False
 
@@ -156,7 +153,7 @@ class RegistrationAgent(object):
 			self.registeredPorts[port].cancel()
 			del self.registeredPorts[port] ###
 
-		data = struct.pack(">HBBIH", 50273, self.seqNum, 5, ip2int(self.addr), port) 	
+		data = struct.pack(">HBBIH", 50273, self.readSeqNum(), 5, ip2int(self.addr), port) 	
 		self.outSocket.sendto(data, self.serviceAddress)
 		try:
 			receivedData, receivedAddr = self.outSocket.recvfrom(1024)
@@ -192,7 +189,7 @@ class RegistrationAgent(object):
 		if size == 6:
 			# Response to REGISTER
 			ver, packetSeqNum, typeNum, lifetime = struct.unpack(">HBBH", data)
-			if ver == 50273 and packetSeqNum == self.seqNum and typeNum == 2:	
+			if ver == 50273 and packetSeqNum == self.readSeqNum() and typeNum == 2:	
 				return lifetime
 			else: 
 				return 0			
@@ -217,7 +214,7 @@ class RegistrationAgent(object):
 		for port in self.registeredPorts.keys():
 			self.registeredPorts[port].cancel()	
 			self.unregister(port)	
-			del self.registeredPorts[port]
+			#del self.registeredPorts[port]
 		self.outSocket.close()
 		self.inSocket.close()	
 
