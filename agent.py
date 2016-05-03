@@ -7,6 +7,8 @@ import os
 import threading
 from threading import Timer
 
+lock = threading.RLock()
+
 class RegistrationAgent(object):
 
 	GLOBAL_PORT = 1274
@@ -70,6 +72,7 @@ class RegistrationAgent(object):
 		return self.privateFetch(prefix, 0)			
 
 	def privateFetch(self, prefix, attempt):
+		print self.seqNum
 		if attempt == 0:
 			self.incrSeqNum()
 		prefixLength = len(prefix)
@@ -90,10 +93,12 @@ class RegistrationAgent(object):
 				return None	
 
 	def processFetchData(self, data):
+		print self.seqNum
 		size = len(data)
 		if size > 4:
 			# Fetch response
 			ver, packetSeqNum, typeNum, numResponses, stringOfResponses = struct.unpack(">HBBB{}s".format(size - 5), data)
+			print packetSeqNum
 			if ver == 50273 and packetSeqNum == self.seqNum and typeNum == 4:
 				unpackString = ">"
 				for i in range(numResponses):
@@ -111,6 +116,7 @@ class RegistrationAgent(object):
 		return self.privateProbe(0)			
 
 	def privateProbe(self, attempt):
+		print self.seqNum
 		if attempt == 0:
 			self.incrSeqNum()
 		data = struct.pack(">HBB", 50273, self.seqNum, 6)
@@ -130,8 +136,10 @@ class RegistrationAgent(object):
 				return False
 
 	def processAck(self, data):
+
 		if len(data) == 4:		
 			ver, packetSeqNum, typeNum = struct.unpack(">HBB", data)
+		
 			if ver == 50273 and packetSeqNum == self.seqNum and typeNum == 7:	
 				return True
 		return False
@@ -140,10 +148,14 @@ class RegistrationAgent(object):
 		return self.privateUnregister(port, 0)
 
 	def privateUnregister(self, port, attempt):	
+		
 		if attempt == 0: 
 			# Only increment on first attempt
 			self.incrSeqNum()
-		
+		if self.registeredPorts[port]:
+			self.registeredPorts[port].cancel()
+			del self.registeredPorts[port] ###
+
 		data = struct.pack(">HBBIH", 50273, self.seqNum, 5, ip2int(self.addr), port) 	
 		self.outSocket.sendto(data, self.serviceAddress)
 		try:
@@ -186,9 +198,20 @@ class RegistrationAgent(object):
 				return 0			
 	
 	def incrSeqNum(self):
-		self.seqNum += 1
-		if self.seqNum > 255:
-			self.seqNum = 0
+		lock.acquire()
+		try:
+			self.seqNum += 1
+			if self.seqNum > 255:
+				self.seqNum = 0
+		finally:
+			lock.release()
+
+	def readSeqNum(self):
+		lock.acquire()
+		try:
+			return self.seqNum
+		finally:
+			lock.release()							
 
 	def close(self):
 		for port in self.registeredPorts.keys():
