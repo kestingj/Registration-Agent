@@ -167,10 +167,10 @@ class RegistrationAgent(object):
 	def listenForProbe(self):
 		receivedData, receivedAddr = self.inSocket.recvfrom(1024)
 		if len(receivedData) == 4:
-			verNum, packetSeqNum, typeNum = struct.unpack("HBB", receivedData)
+			verNum, packetSeqNum, typeNum = struct.unpack(">HBB", receivedData)
 			if verNum == 50273 and typeNum == 6:
 				print "I've been probed!"
-				ack = struct.pack("HBB", 50273, packetSeqNum, 7)
+				ack = struct.pack(">HBB", 50273, packetSeqNum, 7)
 				self.inSocket.send(receivedAddr, ack)
 		listening = threading.Thread(target=self.listenForProbe)	
 		listening.start()	
