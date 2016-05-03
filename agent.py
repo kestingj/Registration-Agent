@@ -171,7 +171,7 @@ class RegistrationAgent(object):
 			if verNum == 50273 and typeNum == 6:
 				print "I've been probed!"
 				ack = struct.pack(">HBB", 50273, packetSeqNum, 7)
-				self.inSocket.send(receivedAddr, ack)
+				self.inSocket.sendto(ack, receivedAddr)
 		listening = threading.Thread(target=self.listenForProbe)	
 		listening.start()	
 

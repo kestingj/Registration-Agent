@@ -13,6 +13,9 @@ def main():
 	addr = socket.gethostbyname(argv[1])	
 	agent = RegistrationAgent(addr, int(argv[2]))
 
+	print "regServerIP = {}".format(addr)
+	print "thisHostIP = {}".format(socket.gethostbyname(socket.gethostname()))
+
 	while True:
 		userInput = raw_input("Enter r(egister), u(nregister), f(etch), p(robe), or q(uit): ")
 		readStdIn(userInput, agent)	
@@ -45,7 +48,6 @@ def register(params, agent):
 			lifetime = agent.register(port, servData, name)
 			if lifetime > 0:
 				localAddr = socket.gethostbyname(socket.gethostname())
-				localAddr = "127.0.0.1" #DELETE	
 				print "Register {}:{} successful: lifetime = {}".format(localAddr, port, lifetime)
 			else:
 				print "Registration failed"	
